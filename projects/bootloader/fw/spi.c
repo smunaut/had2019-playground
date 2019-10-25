@@ -39,7 +39,7 @@ static volatile struct spi * const spi_regs = (void*)(SPI_BASE);
 void
 spi_init(void)
 {
-	spi_regs->csr = 0x102c0;
+	spi_regs->csr = 0xff02c0;
 	flash_wake_up();
 }
 
@@ -47,7 +47,7 @@ void
 spi_xfer(unsigned cs, struct spi_xfer_chunk *xfer, unsigned n)
 {
 	/* CS low */
-	spi_regs->csr &= ~(1 << 16);
+	spi_regs->csr &= ~(1 << (16+cs));
 
 	/* Run the chunks */
 	while (n--) {
@@ -66,7 +66,7 @@ spi_xfer(unsigned cs, struct spi_xfer_chunk *xfer, unsigned n)
 	}
 
 	/* CS high */
-	spi_regs->csr |= (1 << 16);
+	spi_regs->csr |= (1 << (16+cs));
 }
 
 
