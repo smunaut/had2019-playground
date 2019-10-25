@@ -20,6 +20,7 @@ NEXTPNR_SYS_ARGS += --placer $(PLACER)
 FLASH_MODE = qspi
 FLASH_FREQ = 38.8
 
+ECP5_INCLUDES ?= -I$(shell yosys-config --datdir/ecp5/)
 ECP5_LIBS ?= $(shell yosys-config --datdir/ecp5/cells_sim.v)
 
 
@@ -94,7 +95,7 @@ $(BUILD_TMP)/$(PROJ).pnr.rpt $(BUILD_TMP)/$(PROJ).config: $(BUILD_TMP)/$(PROJ).j
 # Simulation
 $(BUILD_TMP)/%_tb: sim/%_tb.v $(ECP5_LIBS) $(PROJ_ALL_PREREQ) $(PROJ_ALL_RTL_SRCS) $(PROJ_ALL_SIM_SRCS)
 	$(IVERILOG) -Wall -DSIM=1 -D$(BOARD_DEFINE)=1 -o $@ \
-		$(PROJ_SYNTH_INCLUDES) $(PROJ_SIM_INCLUDES) \
+		$(PROJ_SYNTH_INCLUDES) $(PROJ_SIM_INCLUDES) $(ECP5_INCLUDES) \
 		$(addprefix -l, $(ECP5_LIBS) $(PROJ_ALL_RTL_SRCS) $(PROJ_ALL_SIM_SRCS)) \
 		$<
 

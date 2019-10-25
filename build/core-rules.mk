@@ -8,6 +8,7 @@ THIS_CORE := $(CORE)
 # Default tools
 IVERILOG ?= iverilog
 
+ECP5_INCLUDES ?= -I$(shell yosys-config --datdir/ecp5/)
 ECP5_LIBS ?= $(shell yosys-config --datdir/ecp5/cells_sim.v)
 
 
@@ -44,7 +45,7 @@ CORE_SIM_INCLUDES   := $(addsuffix /sim/, $(addprefix -I$(ROOT)/cores/, $(CORE_A
 # Simulation
 $(BUILD_TMP)/%_tb: sim/%_tb.v $(ECP5_LIBS) $(CORE_ALL_PREREQ) $(CORE_ALL_RTL_SRCS) $(CORE_ALL_SIM_SRCS)
 	iverilog -Wall -DSIM=1 -o $@ \
-		$(CORE_SYNTH_INCLUDES) $(CORE_SIM_INCLUDES) \
+		$(CORE_SYNTH_INCLUDES) $(CORE_SIM_INCLUDES) $(ECP5_INCLUDES) \
 		$(addprefix -l, $(ECP5_LIBS) $(CORE_ALL_RTL_SRCS) $(CORE_ALL_SIM_SRCS)) \
 		$<
 
