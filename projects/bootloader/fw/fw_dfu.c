@@ -73,6 +73,7 @@ usb_dfu_cb_reboot(void)
 void main()
 {
 	int cmd = 0;
+	bool do_dfu = false;
 
 	/* Init console IO */
 	console_init();
@@ -80,9 +81,31 @@ void main()
 
 	/* SPI */
 	spi_init();
+	psram_qpi_exit(0);
+	psram_qpi_exit(1);
 
-	had_misc_regs->ctrl |= (1 << 15) | (1 << 9);
-	had_misc_regs->pwm  = (had_misc_regs->pwm & ~(7 << 27)) | (1 << 27);
+	/* PSRAM */
+	uint32_t x[2];
+
+	psram_read(0, &x[0], 0, 4);
+	printf("PSRAM A: %08x\n", x[0]);
+	psram_read(1, &x[1], 0, 4);
+	printf("PSRAM B: %08x\n", x[1]);
+
+	/* Should we directly boot to app ? */
+	do_dfu |= ((btn_get() & BTN_SELECT) != 0);
+	do_dfu |= (x[0] == 0x21554644) && (x[1] == 0x21554644);
+
+	if (!do_dfu)
+		reboot_now();
+
+	/* Should we expose the 'bootloader' section in DFU ? */
+	if ((btn_get() & BTN_START) == 0)
+	{
+		/* We patch the descriptor length ... in RO section but not really RO */
+		struct usb_conf_desc *conf = (void*)dfu_stack_desc.conf[0];
+		conf->wTotalLength -= 18;
+	}
 
 	/* LCD */
 	lcd_init();
