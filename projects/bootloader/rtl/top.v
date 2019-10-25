@@ -63,6 +63,15 @@ module top (
 //	inout  wire flash_sck,
 	inout  wire flash_cs,
 
+	// SPI PSRAM
+	inout  wire [3:0] psrama_sio,
+	inout  wire psrama_nce,
+	inout  wire psrama_sclk,
+
+	inout  wire [3:0] psramb_sio,
+	inout  wire psramb_nce,
+	inout  wire psramb_sclk,
+
 	// USB
 	inout  wire usb_dp,
 	inout  wire usb_dm,
@@ -316,14 +325,17 @@ module top (
 	assign wb_rdata[3] = wb_cyc[3] ? ep_rx_data_1 : 32'h00000000;
 
 	// Peripheral [4] : SPI core
-	wire [3:0] spi_io_i;
+	wire [3:0] spi_io_i_flash;
+	wire [3:0] spi_io_i_psrama;
+	wire [3:0] spi_io_i_psramb;
+	reg  [3:0] spi_io_i;
 	wire [3:0] spi_io_o;
 	wire [3:0] spi_io_t;
-	wire spi_sck_o;
-	wire spi_cs_o;
+	wire       spi_sck_o;
+	wire [2:0] spi_cs_o;
 
 	qspi_master_wb #(
-		.N_CS(1)
+		.N_CS(3)
 	) spi_master_I (
 		.spi_io_i(spi_io_i),
 		.spi_io_o(spi_io_o),
@@ -340,21 +352,69 @@ module top (
 		.rst(rst)
 	);
 
+		// PHY to Flash
 	qspi_phy_ecp5 #(
 		.N_CS(1),
 		.IS_SYS_CFG(1)
-	) spi_phy_I (
+	) spi_phy_flash_I (
 		.spi_io({flash_hold, flash_wp, flash_miso, flash_mosi}),
 		.spi_cs(flash_cs),
 		.spi_sck(),		// Special via USRMCLK
-		.spi_io_i(spi_io_i),
+		.spi_io_i(spi_io_i_flash),
 		.spi_io_o(spi_io_o),
-		.spi_io_t(spi_io_t),
-		.spi_sck_o(spi_sck_o),
-		.spi_cs_o(spi_cs_o),
+		.spi_io_t(spi_cs_o[0] ? 4'hf : spi_io_t),
+		.spi_sck_o(spi_cs_o[0] ? 1'b0 : spi_sck_o),
+		.spi_cs_o(spi_cs_o[0]),
 		.clk(clk_48m),
 		.rst(rst)
 	);
+
+		// PHY to PSRAM A
+	qspi_phy_ecp5 #(
+		.N_CS(1),
+		.IS_SYS_CFG(0)
+	) spi_phy_psrama_I (
+		.spi_io(psrama_sio),
+		.spi_cs(psrama_nce),
+		.spi_sck(psrama_sclk),
+		.spi_io_i(spi_io_i_psrama),
+		.spi_io_o(spi_io_o),
+		.spi_io_t(spi_cs_o[1] ? 4'hf : spi_io_t),
+		.spi_sck_o(spi_cs_o[1] ? 1'b0 : spi_sck_o),
+		.spi_cs_o(spi_cs_o[1]),
+		.clk(clk_48m),
+		.rst(rst)
+	);
+
+		// PHY to PSRAM B
+	qspi_phy_ecp5 #(
+		.N_CS(1),
+		.IS_SYS_CFG(0)
+	) spi_phy_psramb_I (
+		.spi_io(psramb_sio),
+		.spi_cs(psramb_nce),
+		.spi_sck(psramb_sclk),
+		.spi_io_i(spi_io_i_psramb),
+		.spi_io_o(spi_io_o),
+		.spi_io_t(spi_cs_o[2] ? 4'hf : spi_io_t),
+		.spi_sck_o(spi_cs_o[2] ? 1'b0 : spi_sck_o),
+		.spi_cs_o(spi_cs_o[2]),
+		.clk(clk_48m),
+		.rst(rst)
+	);
+
+		// MUX for read data
+	always @(*)
+	begin
+		spi_io_i <= 4'h0;
+
+		if (~spi_cs_o[0])
+			spi_io_i <= spi_io_i_flash;
+		else if (~spi_cs_o[1])
+			spi_io_i <= spi_io_i_psrama;
+		else if (~spi_cs_o[2])
+			spi_io_i <= spi_io_i_psramb;
+	end
 
 
 	// Clock / Reset
