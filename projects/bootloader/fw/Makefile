@@ -12,6 +12,7 @@ HEADERS_common=\
 	config.h \
 	console.h \
 	mini-printf.h \
+	misc.h \
 	spi.h \
 	usb_hw.h \
 	usb_priv.h \
@@ -22,6 +23,7 @@ SOURCES_common=\
 	start.S \
 	console.c \
 	mini-printf.c  \
+	misc.c \
 	spi.c \
 	usb.c \
 	usb_ctrl_ep0.c \
