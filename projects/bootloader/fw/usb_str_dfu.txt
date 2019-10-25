@@ -4,3 +4,4 @@ Supercon 2019 badge (DFU)
 DFU
 ECP5 bitstream
 RISC-V firmware
+Bootloader
