@@ -116,8 +116,8 @@ module soc_had_misc (
 	// Bus interface
 	// -------------
 
-	// Ack (immediately, or if for LCD FIFO, make sure it's not full)
-	assign ack_nxt = ~ack & bus_cyc; // & (~bus_we | ~bus_addr[1] | ~lf_full);
+	// Ack
+	assign ack_nxt = ~ack & bus_cyc;
 
 	always @(posedge clk)
 		ack <= ack_nxt;
