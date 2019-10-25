@@ -160,7 +160,7 @@ module soc_had_misc (
 		else
 			bus_rdata <= bus_addr[0] ?
 				{ 2'b00, led_pwm } :
-				{ boot_key, btn_val, lcd_rst_i, 6'd0, led_ena };
+				{ boot_key, btn_val, lcd_rst_i, 5'd0, led_ena };
 
 
 	// Buttons
