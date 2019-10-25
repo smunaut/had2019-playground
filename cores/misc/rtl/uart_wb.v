@@ -36,7 +36,8 @@
 module uart_wb #(
 	parameter integer FIFO_DEPTH = 16,
 	parameter integer DIV_WIDTH = 8,
-	parameter integer DW = 16
+	parameter integer DW = 16,
+	parameter integer IRDA = 0
 )(
 	// UART
 	output wire uart_tx,
@@ -102,17 +103,32 @@ module uart_wb #(
 	// TX Core
 	// -------
 
-	uart_tx #(
-		.DIV_WIDTH(DIV_WIDTH)
-	) uart_tx_I (
-		.data(uart_tx_data),
-		.valid(uart_tx_valid),
-		.ack(uart_tx_ack),
-		.tx(uart_tx),
-		.div(uart_div),
-		.clk(clk),
-		.rst(rst)
-	);
+	generate
+		if (IRDA)
+			uart_irda_tx #(
+				.DIV_WIDTH(DIV_WIDTH)
+			) uart_tx_I (
+				.data(uart_tx_data),
+				.valid(uart_tx_valid),
+				.ack(uart_tx_ack),
+				.tx(uart_tx),
+				.div(uart_div),
+				.clk(clk),
+				.rst(rst)
+			);
+		else
+			uart_tx #(
+				.DIV_WIDTH(DIV_WIDTH)
+			) uart_tx_I (
+				.data(uart_tx_data),
+				.valid(uart_tx_valid),
+				.ack(uart_tx_ack),
+				.tx(uart_tx),
+				.div(uart_div),
+				.clk(clk),
+				.rst(rst)
+			);
+	endgenerate
 
 
 	// TX FIFO
@@ -141,17 +157,32 @@ module uart_wb #(
 	// RX Core
 	// -------
 
-	uart_rx #(
-		.DIV_WIDTH(DIV_WIDTH),
-		.GLITCH_FILTER(2)
-	) uart_rx_I (
-		.rx(uart_rx),
-		.data(uart_rx_data),
-		.stb(uart_rx_stb),
-		.div(uart_div),
-		.clk(clk),
-		.rst(rst)
-	);
+	generate
+		if (IRDA)
+			uart_irda_rx #(
+				.DIV_WIDTH(DIV_WIDTH),
+				.GLITCH_FILTER(2)
+			) uart_rx_I (
+				.rx(uart_rx),
+				.data(uart_rx_data),
+				.stb(uart_rx_stb),
+				.div(uart_div),
+				.clk(clk),
+				.rst(rst)
+			);
+		else
+			uart_rx #(
+				.DIV_WIDTH(DIV_WIDTH),
+				.GLITCH_FILTER(2)
+			) uart_rx_I (
+				.rx(uart_rx),
+				.data(uart_rx_data),
+				.stb(uart_rx_stb),
+				.div(uart_div),
+				.clk(clk),
+				.rst(rst)
+			);
+	endgenerate
 
 
 	// RX FIFO
