@@ -85,6 +85,7 @@ module soc_had_misc (
 	wire rd_rst;
 
 	// Buttons
+	reg  [16:0] btn_sample_cnt;
 	wire  [7:0] btn_io;
 	wire  [7:0] btn_r;
 	wire  [7:0] btn_val;
@@ -177,7 +178,7 @@ module soc_had_misc (
 	);
 
 	IFS1P3BX btn_ireg[7:0] (
-		.PD(rst),
+		.PD(1'b0),
 		.D(btn_io),
 		.SP(1'b1),
 		.SCLK(clk),
@@ -185,11 +186,19 @@ module soc_had_misc (
 	);
 
 	// Glitch filter on all buttons
+	always @(posedge clk)
+		if (rst)
+			btn_sample_cnt <= 0;
+		else
+			btn_sample_cnt <= btn_sample_cnt[16] ? 17'd0 : (btn_sample_cnt + 1);
+
 	glitch_filter #(
-		.L(4)
+		.L(3),
+		.WITH_CE(1)
 	) btn_flt_I[7:0] (
 		.pin_iob_reg(btn_r),
 		.cond(1'b1),
+		.ce(btn_sample_cnt[16]),
 		.val(btn_val),
 		.rise(),
 		.fall(),
