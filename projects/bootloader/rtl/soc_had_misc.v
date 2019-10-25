@@ -127,9 +127,9 @@ module soc_had_misc (
 	// Write enable
 	always @(posedge clk)
 	begin
-		we_ctrl     <= ack_nxt & (bus_addr[1:0] == 2'b00);
-		we_led_pwm  <= ack_nxt & (bus_addr[1:0] == 2'b01);
-		we_lcd_fifo <= ack_nxt &  bus_addr[1];
+		we_ctrl     <= ack_nxt & bus_we & (bus_addr[1:0] == 2'b00);
+		we_led_pwm  <= ack_nxt & bus_we & (bus_addr[1:0] == 2'b01);
+		we_lcd_fifo <= ack_nxt & bus_we &  bus_addr[1];
 	end
 
 	// Write
