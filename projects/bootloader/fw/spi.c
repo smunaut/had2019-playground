@@ -238,12 +238,14 @@ flash_sector_erase(uint32_t addr)
 	_flash_erase(FLASH_CMD_SECTOR_ERASE, addr);
 }
 
-void flash_block_erase_32k(uint32_t addr)
+void
+flash_block_erase_32k(uint32_t addr)
 {
 	_flash_erase(FLASH_CMD_BLOCK_ERASE_32k, addr);
 }
 
-void flash_block_erase_64k(uint32_t addr)
+void
+flash_block_erase_64k(uint32_t addr)
 {
 	_flash_erase(FLASH_CMD_BLOCK_ERASE_64k, addr);
 }
