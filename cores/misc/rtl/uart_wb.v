@@ -34,6 +34,7 @@
 `default_nettype none
 
 module uart_wb #(
+	parameter integer FIFO_DEPTH = 16,
 	parameter integer DIV_WIDTH = 8,
 	parameter integer DW = 16
 )(
@@ -118,7 +119,7 @@ module uart_wb #(
 	// -------
 
 	fifo_sync_ram #(
-		.DEPTH(512),
+		.DEPTH(FIFO_DEPTH),
 		.WIDTH(8)
 	) uart_tx_fifo_I (
 		.wr_data(utf_wdata),
@@ -157,7 +158,7 @@ module uart_wb #(
 	// -------
 
 	fifo_sync_ram #(
-		.DEPTH(512),
+		.DEPTH(FIFO_DEPTH),
 		.WIDTH(8)
 	) uart_rx_fifo_I (
 		.wr_data(urf_wdata),
