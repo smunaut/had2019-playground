@@ -34,10 +34,12 @@
 `default_nettype none
 
 module glitch_filter #(
-	parameter integer L = 2
+	parameter integer L = 2,
+	parameter integer WITH_CE = 0
 )(
 	input wire  pin_iob_reg,
 	input wire  cond,
+	input wire  ce,
 
 	output wire val,
 	output reg  rise,
@@ -49,6 +51,8 @@ module glitch_filter #(
 	// Signals
 	wire [L-1:0] all_zero;
 	wire [L-1:0] all_one;
+	wire [L-1:0] all_cur;
+	wire ce_i = WITH_CE ? ce : 1'b1;
 
 	reg [1:0] sync;
 	reg state;
@@ -57,6 +61,7 @@ module glitch_filter #(
 	// Constants
 	assign all_zero = { L{1'b0} };
 	assign all_one  = { L{1'b1} };
+	assign all_cur  = { L{sync[1]} };
 
 	// Synchronizer
 	always @(posedge clk)
@@ -65,8 +70,8 @@ module glitch_filter #(
 	// Filter
 	always @(posedge clk)
 		if (rst)
-			cnt <= all_one;
-		else begin
+			cnt <= all_cur;
+		else if (ce_i) begin
 			if (sync[1] & (cnt != all_one))
 				cnt <= cnt + 1;
 			else if (~sync[1] & (cnt != all_zero))
@@ -78,7 +83,7 @@ module glitch_filter #(
 	// State
 	always @(posedge clk)
 		if (rst)
-			state <= 1'b1;
+			state <= sync[1];
 		else begin
 			if (state & cnt == all_zero)
 				state <= 1'b0;
