@@ -70,11 +70,16 @@ spi_xfer(unsigned cs, struct spi_xfer_chunk *xfer, unsigned n)
 }
 
 
+#define FLASH_CMD_RESET_ENABLE		0x66
+#define FLASH_CMD_RESET_EXECUTE		0x99
 #define FLASH_CMD_DEEP_POWER_DOWN	0xb9
 #define FLASH_CMD_WAKE_UP		0xab
 #define FLASH_CMD_WRITE_ENABLE		0x06
 #define FLASH_CMD_WRITE_ENABLE_VOLATILE	0x50
 #define FLASH_CMD_WRITE_DISABLE		0x04
+
+#define FLASH_CMD_QPI_ENTER		0x38
+#define FLASH_CMD_QPI_EXIT		0xff
 
 #define FLASH_CMD_READ_MANUF_ID		0x9f
 #define FLASH_CMD_READ_UNIQUE_ID	0x4b
@@ -97,6 +102,33 @@ flash_cmd(uint8_t cmd)
 		{ .data = (void*)&cmd, .len = 1, .read = false, .write = true,  },
 	};
 	spi_xfer(SPI_CS_FLASH, xfer, 1);
+}
+
+void
+flash_cmd_qpi(uint8_t cmd)
+{
+	/* CS low */
+	spi_regs->csr &= ~(1 << 16);
+
+	/* Command in quad-mode */
+	spi_regs->data = cmd | 0x200;
+
+	/* Wait for completion */
+	while (!(spi_regs->csr & (1 << 27)));
+
+	/* CS high */
+	spi_regs->csr |= (1 << 16);
+}
+
+void
+flash_reset(void)
+{
+	/* Send 'Exit QPI' in quad mode */
+	flash_cmd_qpi(FLASH_CMD_QPI_EXIT);
+
+	/* Soft reset */
+	flash_cmd(FLASH_CMD_RESET_ENABLE);
+	flash_cmd(FLASH_CMD_RESET_EXECUTE);
 }
 
 void

@@ -40,6 +40,8 @@ void spi_init(void);
 void spi_xfer(unsigned cs, struct spi_xfer_chunk *xfer, unsigned n);
 
 void flash_cmd(uint8_t cmd);
+void flash_cmd_qpi(uint8_t cmd);
+void flash_reset(void);
 void flash_deep_power_down(void);
 void flash_wake_up(void);
 void flash_write_enable(void);

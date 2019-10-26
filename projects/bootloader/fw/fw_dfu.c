@@ -81,6 +81,8 @@ void main()
 
 	/* SPI */
 	spi_init();
+
+	flash_reset();
 	psram_qpi_exit(0);
 	psram_qpi_exit(1);
 
