@@ -49,7 +49,7 @@ module qspi_master_wb #(
 	input  wire [31:0] bus_wdata,
 	output reg  [31:0] bus_rdata,
 	input  wire bus_cyc,
-	input  wire bus_ack,
+	output wire bus_ack,
 	input  wire bus_we,
 
 	// Clock
@@ -183,7 +183,7 @@ module qspi_master_wb #(
 	always @(posedge clk)
 		txf_wren <= bus_cyc & bus_we & ~ack & bus_addr[0] & ~txf_full;
 
-	// TX FIFO read
+	// RX FIFO read
 	assign rxf_rden = ack & bus_addr[0] & ~bus_we & ~bus_rdata[31];
 
 	// Read mux
