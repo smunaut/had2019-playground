@@ -2,6 +2,6 @@
 HACKADAY
 Supercon 2019 badge (DFU)
 DFU
-ECP5 bitstream
-RISC-V firmware
+ECP5 bitstream (SoC)
+RISC-V firmware (IPL)
 Bootloader
