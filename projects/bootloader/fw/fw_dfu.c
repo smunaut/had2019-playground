@@ -37,6 +37,8 @@
 
 
 extern const struct usb_stack_descriptors dfu_stack_desc;
+extern const uint8_t desc_ms_os_20[0x24];
+
 
 static void
 serial_no_init()
@@ -68,6 +70,28 @@ usb_dfu_cb_reboot(void)
 	/* Reboot */
 	reboot_now();
 }
+
+static enum usb_fnd_resp
+_ms_os_20_ctrl_req(struct usb_ctrl_req *req, struct usb_xfer *xfer)
+{
+	switch (req->wRequestAndType)
+	{
+	case 0x01c0:
+		if (req->wIndex == 7) {
+			xfer->data = (void*)desc_ms_os_20;
+			xfer->len  = sizeof(desc_ms_os_20);
+			return USB_FND_SUCCESS;
+		} else {
+			return USB_FND_ERROR;
+		}
+	}
+
+	return USB_FND_CONTINUE;
+}
+
+static struct usb_fn_drv _ms_os_20_drv = {
+	.ctrl_req = _ms_os_20_ctrl_req,
+};
 
 
 void main()
@@ -122,6 +146,7 @@ void main()
 
 	usb_init(&dfu_stack_desc);
 	usb_dfu_init();
+	usb_register_function_driver(&_ms_os_20_drv);
 	usb_connect();
 
 	/* Main loop */

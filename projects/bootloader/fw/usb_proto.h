@@ -41,6 +41,8 @@ enum usb_desc_type {
 	USB_DT_OTG		= 9,
 	USB_DT_DEBUG		= 10,
 	USB_DT_INTF_ASSOC	= 11,
+	USB_DT_BOS		= 15,
+	USB_DT_DEV_CAP		= 16,
 	USB_DT_DFU		= 33,
 	USB_DT_CS_INTF		= 36,
 	USB_DT_CS_EP		= 37,
@@ -154,6 +156,21 @@ struct usb_cs_intf_call_mgmt_desc {
 	uint8_t  bDescriptorsubtype;
 	uint8_t  bmCapabilities;
 	uint8_t  bDataInterface;
+} __attribute__((packed));
+
+struct usb_bos_desc {
+	uint8_t  bLength;
+	uint8_t  bDescriptorType;
+	uint16_t wTotalLength;
+	uint8_t  bNumDeviceCaps;
+} __attribute__((packed));
+
+struct usb_bos_plat_cap_hdr {
+	uint8_t bLength;
+	uint8_t bDescriptorType;
+	uint8_t bDevCapabilityType;
+	uint8_t bReserved;
+	uint8_t PlatformCapabilityUUID[16];
 } __attribute__((packed));
 
 

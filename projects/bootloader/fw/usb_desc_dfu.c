@@ -27,6 +27,37 @@
 #define NULL ((void*)0)
 #define num_elem(a) (sizeof(a) / sizeof(a[0]))
 
+#define U16_TO_U8_LE(x) ((x) & 0xff), (((x) >> 8) & 0xff)
+#define U32_TO_U8_LE(x) ((x) & 0xff), (((x) >> 8) & 0xff), (((x) >> 16) & 0xff), (((x) >> 24) & 0xff)
+
+
+enum microsoft_os_20_type
+{
+	MS_OS_20_SET_HEADER_DESCRIPTOR		= 0x00,
+	MS_OS_20_SUBSET_HEADER_CONFIGURATION	= 0x01,
+	MS_OS_20_SUBSET_HEADER_FUNCTION		= 0x02,
+	MS_OS_20_FEATURE_COMPATBLE_ID		= 0x03,
+	MS_OS_20_FEATURE_REG_PROPERTY		= 0x04,
+	MS_OS_20_FEATURE_MIN_RESUME_TIME	= 0x05,
+	MS_OS_20_FEATURE_MODEL_ID		= 0x06,
+	MS_OS_20_FEATURE_CCGP_DEVICE		= 0x07,
+	MS_OS_20_FEATURE_VENDOR_REVISION	= 0x08,
+};
+
+const uint8_t desc_ms_os_20[0x1E] = {
+	/* Set header: length, type, windows version, total length */
+	U16_TO_U8_LE(0x000A),
+	U16_TO_U8_LE(MS_OS_20_SET_HEADER_DESCRIPTOR),
+	U32_TO_U8_LE(0x06030000),
+	U16_TO_U8_LE(sizeof(desc_ms_os_20)),
+
+	/* MS OS 2.0 Compatible ID descriptor: length, type, compatible ID, sub compatible ID */
+	U16_TO_U8_LE(0x0014),
+	U16_TO_U8_LE(MS_OS_20_FEATURE_COMPATBLE_ID),
+	'W', 'I', 'N', 'U', 'S', 'B', 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+
 
 static const struct {
 	struct usb_conf_desc conf;
@@ -113,24 +144,55 @@ static const struct usb_conf_desc * const _conf_desc_array[] = {
 static const struct usb_dev_desc _dev_desc = {
 	.bLength		= sizeof(struct usb_dev_desc),
 	.bDescriptorType	= USB_DT_DEV,
-	.bcdUSB			= 0x0200,
+	.bcdUSB			= 0x0201,
 	.bDeviceClass		= 0,
 	.bDeviceSubClass	= 0,
 	.bDeviceProtocol	= 0,
 	.bMaxPacketSize0	= 64,
 	.idVendor		= 0x1d50,
 	.idProduct		= 0x614b,
-	.bcdDevice		= 0x0003,	/* v0.3 */
+	.bcdDevice		= 0x0004,	/* v0.4 */
 	.iManufacturer		= 2,
 	.iProduct		= 3,
 	.iSerialNumber		= 1,
 	.bNumConfigurations	= num_elem(_conf_desc_array),
 };
 
+static const struct {
+	struct usb_bos_desc bos;
+	struct usb_bos_plat_cap_hdr cap_hdr;
+	uint8_t cap_data[8];
+} __attribute__ ((packed)) _dfu_bos_desc = {
+	.bos = {
+		.bLength		= sizeof(struct usb_bos_desc),
+		.bDescriptorType	= USB_DT_BOS,
+		.wTotalLength		= sizeof(_dfu_bos_desc),
+		.bNumDeviceCaps		= 1,
+	},
+	.cap_hdr = {
+		.bLength		= sizeof(struct usb_bos_plat_cap_hdr) + 8,
+		.bDescriptorType	= USB_DT_DEV_CAP,
+		.bDevCapabilityType	= 5, /* PLATFORM */
+		.bReserved		= 0,
+		.PlatformCapabilityUUID	= {
+			0xDF, 0x60, 0xDD, 0xD8, 0x89, 0x45, 0xC7, 0x4C,
+			0x9C, 0xD2, 0x65, 0x9D, 0x9E, 0x64, 0x8A, 0x9F,
+		},
+	},
+	.cap_data = {
+		U32_TO_U8_LE(0x06030000),		/* dwWindowsVersion */
+		U16_TO_U8_LE(sizeof(desc_ms_os_20)),	/* wMSOSDescriptorSetTotalLength */
+		0x01,					/* bMS_VendorCode */
+		0x00,					/* bAltEnumCode */
+	},
+};
+
+
 #include "usb_str_dfu.gen.h"
 
 const struct usb_stack_descriptors dfu_stack_desc = {
 	.dev    = &_dev_desc,
+	.bos    = &_dfu_bos_desc.bos,
 	.conf   = _conf_desc_array,
 	.n_conf = num_elem(_conf_desc_array),
 	.str    = _str_desc_array,
