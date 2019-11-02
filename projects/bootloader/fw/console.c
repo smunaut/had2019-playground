@@ -39,7 +39,7 @@ static char _printf_buf[128];
 
 void console_init(void)
 {
-	uart_regs->clkdiv = 46;	/* 1 Mbaud with clk=48MHz */
+	uart_regs->clkdiv = 414;	/* 115200 baid with clk=48MHz */
 }
 
 char getchar(void)
