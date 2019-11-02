@@ -85,7 +85,11 @@ spi_xfer(unsigned cs, struct spi_xfer_chunk *xfer, unsigned n)
 #define FLASH_CMD_READ_UNIQUE_ID	0x4b
 
 #define FLASH_CMD_READ_SR1		0x05
-#define FLASH_CMD_WRITE_SR1		0x01
+#define FLASH_CMD_READ_SR2		0x35
+#define FLASH_CMD_READ_SR3		0x05
+#define FLASH_CMD_WRITE_SR1		0x15
+#define FLASH_CMD_WRITE_SR2		0x31
+#define FLASH_CMD_WRITE_SR3		0x11
 
 #define FLASH_CMD_READ_DATA		0x03
 #define FLASH_CMD_PAGE_PROGRAM		0x02
@@ -198,9 +202,13 @@ flash_read_sr(void)
 }
 
 void
-flash_write_sr(uint8_t sr)
+flash_write_sr(uint8_t srno, uint8_t sr)
 {
-	uint8_t cmd[2] = { FLASH_CMD_WRITE_SR1, sr };
+	uint8_t cmd[2] = { 0, sr };
+	if (srno==1) cmd[0]=FLASH_CMD_WRITE_SR1;
+	if (srno==2) cmd[0]=FLASH_CMD_WRITE_SR2;
+	if (srno==3) cmd[0]=FLASH_CMD_WRITE_SR3;
+	if (cmd[0]==0) return;
 	struct spi_xfer_chunk xfer[1] = {
 		{ .data = (void*)cmd, .len = 2, .read = false, .write = true,  },
 	};
@@ -282,6 +290,17 @@ flash_block_erase_64k(uint32_t addr)
 	_flash_erase(FLASH_CMD_BLOCK_ERASE_64k, addr);
 }
 
+
+//Note: this is specific to the W25J128 on the Hackaday badges. Other models and types of flash may have
+//a different way of protecting this. This also assumes an ECP5 bootloader partition of 1.5M.
+void
+flash_write_protect_bootloader()
+{
+	flash_write_enable_volatile();
+	flash_write_sr(1, 0x34); //Protect lower 1MiB from writing. Not ideal as the bootloader is 1.5M...
+	flash_write_enable_volatile();
+	flash_write_sr(2, 0x3); //Quad enable and Status Register Lock enabled.
+}
 
 #define PSRAM_CMD_WRITE	0x02
 #define PSRAM_CMD_READ	0x03

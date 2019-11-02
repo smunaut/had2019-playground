@@ -118,20 +118,24 @@ void main()
 	psram_read(1, &x[1], 0, 4);
 	printf("PSRAM B: %08x\n", x[1]);
 
+	/* Should we expose the 'bootloader' section as writable? */
+	if ((btn_get() & BTN_START) == 0)
+	{
+		/* We patch the descriptor length ... in RO section but not really RO */
+		struct usb_conf_desc *conf = (void*)dfu_stack_desc.conf[0];
+		conf->wTotalLength -= 18;
+
+		/* Set protection bits so apps also can't accidentally brick the badge. */
+		flashchip_select(FLASHCHIP_INTERNAL);
+		flash_write_protect_bootloader();
+	}
+
 	/* Should we directly boot to app ? */
 	do_dfu |= ((btn_get() & BTN_SELECT) != 0);
 	do_dfu |= (x[0] == 0x21554644) && (x[1] == 0x21554644);
 
 	if (!do_dfu)
 		reboot_now();
-
-	/* Should we expose the 'bootloader' section in DFU ? */
-	if ((btn_get() & BTN_START) == 0)
-	{
-		/* We patch the descriptor length ... in RO section but not really RO */
-		struct usb_conf_desc *conf = (void*)dfu_stack_desc.conf[0];
-		conf->wTotalLength -= 18;
-	}
 
 	/* LCD */
 	lcd_init();
