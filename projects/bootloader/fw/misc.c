@@ -97,6 +97,7 @@ led_set_pwm(int n, int level)
 void __attribute__((noreturn))
 reboot_now(void)
 {
+	flashchip_select(FLASHCHIP_INTERNAL);
 	had_misc_regs->ctrl = (had_misc_regs->ctrl & 0x00ffffff) | 0xa5000000;
 	while (1);
 }
