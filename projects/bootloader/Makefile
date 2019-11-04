@@ -50,3 +50,6 @@ $(BUILD_TMP)/$(PROJ).bit $(BUILD_TMP)/$(PROJ).svf: $(BUILD_TMP)/$(PROJ).config $
 		--input $(BUILD_TMP)/$(PROJ)-sw.config \
 		--svf $(BUILD_TMP)/$(PROJ).svf --svf-rowsize 100000 \
 		--bit $(BUILD_TMP)/$(PROJ).bit
+
+dfu_flash: $(BUILD_TMP)/$(PROJ).bit
+	$(DFU_UTIL) -d 1d50:614a,1d50:614b -a 5 -R -D $<
