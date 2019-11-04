@@ -36,7 +36,7 @@ NEXTPNR_ARGS = --pre-pack data/clocks.py
 include ../../build/project-rules.mk
 
 # Custom rules
-fw/fw_dfu.hex:
+fw/fw_dfu.hex: fw
 	make -C fw fw_dfu.hex
 
 $(BUILD_TMP)/boot.hex:
@@ -53,3 +53,6 @@ $(BUILD_TMP)/$(PROJ).bit $(BUILD_TMP)/$(PROJ).svf: $(BUILD_TMP)/$(PROJ).config $
 
 dfu_flash: $(BUILD_TMP)/$(PROJ).bit
 	$(DFU_UTIL) -d 1d50:614a,1d50:614b -a 5 -R -D $<
+
+# Always try to rebuild the hex file
+.PHONY: fw
