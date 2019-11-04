@@ -24,6 +24,7 @@
 #include <stdint.h>
 
 #include "config.h"
+#include "misc.h"
 
 
 struct had_misc {
@@ -34,6 +35,25 @@ struct had_misc {
 } __attribute__((packed,aligned(4)));
 
 static volatile struct had_misc * const had_misc_regs = (void*)(HAD_MISC_BASE);
+
+
+// ---------------------------------------------------------------------------
+// Active flash selection
+// ---------------------------------------------------------------------------
+
+void
+flashchip_select(int flash_sel)
+{
+	// /cs of the flash chips is routed via a mux connected to a d-flipflop. If
+	// the output of that flipflop is low, the internal flash is selected,
+	// otherwise the external flash. The flipflop is connected to two bits in
+	//the ctrl reg: 14 is clock, 13 is data.
+	int v=had_misc_regs->ctrl&~((1<<14)|(1<<13));
+	if (flash_sel==FLASHCHIP_CART) v|=(1<<13);
+	had_misc_regs->ctrl = v;
+	had_misc_regs->ctrl = v | (1<<14);
+	had_misc_regs->ctrl = v;
+}
 
 
 // ---------------------------------------------------------------------------

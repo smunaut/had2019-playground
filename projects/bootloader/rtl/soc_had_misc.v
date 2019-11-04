@@ -65,6 +65,10 @@ module soc_had_misc (
 	input  wire bus_ack,
 	input  wire bus_we,
 
+	// Internal/external flash selection flipflop input
+	output reg  fsel_c,
+	output reg  fsel_d,
+
 	// Clock
 	input  wire clk,
 	input  wire rst
@@ -140,10 +144,14 @@ module soc_had_misc (
 			lcd_rst_i <=  1'b0;
 			led_ena   <= 10'h000;
 			led_pwm   <= 30'h3fffffff;
+			fsel_c    <= 1'b0;
+			fsel_d    <= 1'b0;
 		end else begin
 			if (we_ctrl) begin
 				boot_key  <= bus_wdata[31:24];
 				lcd_rst_i <= bus_wdata[15];
+				fsel_c    <= bus_wdata[14];
+				fsel_d    <= bus_wdata[13];
 				led_ena   <= bus_wdata[9:0];
 			end
 
@@ -161,7 +169,7 @@ module soc_had_misc (
 		else
 			bus_rdata <= bus_addr[0] ?
 				{ 2'b00, led_pwm } :
-				{ boot_key, btn_val, lcd_rst_i, 5'd0, led_ena };
+				{ boot_key, btn_val, lcd_rst_i, fsel_c, fsel_d, 3'd0, led_ena };
 
 
 	// Buttons

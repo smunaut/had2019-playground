@@ -34,6 +34,10 @@
 
 #define LCD_BACKLIGHT	9
 
+#define FLASHCHIP_INTERNAL 0
+#define FLASHCHIP_CART 1
+
+void flashchip_select(int flash_sel);
 
 uint32_t btn_get(void);
 

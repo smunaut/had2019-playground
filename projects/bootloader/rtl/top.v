@@ -84,6 +84,10 @@ module top (
 	// Generic IO
 	inout  wire [29:0] genio,
 
+	// Internal/external flash selection flipflop input
+	output wire fsel_c,
+	output wire fsel_d,
+
 	// Clock
 	input  wire clk
 );
@@ -259,6 +263,8 @@ module top (
 		.bus_cyc(wb_cyc[0]),
 		.bus_ack(wb_ack[0]),
 		.bus_we(wb_we),
+		.fsel_c(fsel_c),
+		.fsel_d(fsel_d),
 		.clk(clk_48m),
 		.rst(rst)
 	);
