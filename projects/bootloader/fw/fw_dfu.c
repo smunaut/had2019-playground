@@ -37,7 +37,7 @@
 
 
 extern const struct usb_stack_descriptors dfu_stack_desc;
-extern const uint8_t desc_ms_os_20[0x24];
+extern const uint8_t desc_ms_os_20[0x1E];
 
 
 static void
