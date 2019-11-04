@@ -4,4 +4,7 @@ Supercon 2019 badge (DFU)
 DFU
 ECP5 bitstream (SoC)
 RISC-V firmware (IPL)
+Cartridge ECP5 bitstream (SoC)
+Cartridge RISC-V firmware (IPL)
+Cartridge main FS region
 Bootloader
