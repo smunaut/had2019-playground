@@ -1,0 +1,1 @@
+../../bootloader/rtl/soc_bridge.v
