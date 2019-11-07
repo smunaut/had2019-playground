@@ -1,0 +1,71 @@
+Global registers
+----------------
+
+0 - Sample Rate divider
+
+	Sample rate will be 48 M / (N + 2)
+
+
+1 - Global volume control
+
+	[7:0] Volume
+
+
+2 - Voice Force Enable
+
+	[15:0] Writing '1' will force 'on' the gate of a voice
+
+
+3 - Voice Start
+
+	[15:0] Writing '1' will force turn on a voice for the configured
+	       duration
+
+
+Voice registers
+---------------
+
+0 - Control
+
+	[  0] Enable: Needs to be '1' for the voice to play
+	[  1] Phase zero: Forces the phase to 0 (to allow phase sync)
+	[4:2] Voice type
+		000 - Saw Tooth
+		001 - Triangle
+		010 - Pulse
+		011 - Sub Harmonic
+		100 - 4k wave table - Forward only
+		101 - 4k wave table - Forward & Reverse
+		110 - 2k wave table - Forward only
+		111 - 2k wave table - Forward & Reverse
+
+
+2 - Oscillator Phase increment
+	
+	[15:0] phase_inc
+
+
+3 - Oscillator Phase reference
+
+	[13:0] phase_cmp: Sets the duty cycle for Pulse & Sub-Harmonic voices
+
+
+4 - Volume
+	[15:8] Left voice volume
+	[ 7:0] Right voice volume
+
+
+5 - Duration
+
+	[10:0] Note duration
+		(base unit = 256 samples) 
+
+6 - Attack
+7 - Decay
+	[15:8] Inverse time constant exponent
+               Updates the envelope volume every (N+2)*16 samples
+	       Min: -1
+	       Max: 127
+
+	[ 7:0] Inverse time constant mantissa
+
