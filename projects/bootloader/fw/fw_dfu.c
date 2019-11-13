@@ -106,6 +106,7 @@ void main()
 	/* SPI */
 	spi_init();
 
+	flashchip_select(FLASHCHIP_INTERNAL);
 	flash_reset();
 	psram_qpi_exit(0);
 	psram_qpi_exit(1);
