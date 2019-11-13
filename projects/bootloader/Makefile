@@ -46,7 +46,7 @@ $(BUILD_TMP)/$(PROJ).bit $(BUILD_TMP)/$(PROJ).svf: $(BUILD_TMP)/$(PROJ).config $
 	$(ECPBRAM) -v -f $(BUILD_TMP)/boot.hex -t fw/fw_dfu.hex -i $(BUILD_TMP)/$(PROJ).config -o $(BUILD_TMP)/$(PROJ)-sw.config
 	$(ECPPACK) \
 		--spimode $(FLASH_MODE) --freq $(FLASH_FREQ) \
-		--bootaddr 0x180000 \
+		--bootaddr 0x180000 --compress \
 		--input $(BUILD_TMP)/$(PROJ)-sw.config \
 		--svf $(BUILD_TMP)/$(PROJ).svf --svf-rowsize 100000 \
 		--bit $(BUILD_TMP)/$(PROJ).bit
