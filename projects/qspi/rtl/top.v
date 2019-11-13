@@ -324,12 +324,10 @@ module top (
 	);
 
 	// Peripheral [3] : Sound
-	wire [15:0] audio_l;
-	wire [15:0] audio_r;
+	wire [15:0] audio_out_pdm;
 
-	synth_wb synth_I (
-		.audio_out_l(audio_l),
-		.audio_out_r(audio_r),
+	audio_wb synth_I (
+		.audio_out_pdm(audio_out_pdm),
 		.bus_addr(wb_addr[15:0]),
 		.bus_wdata(wb_wdata),
 		.bus_rdata(wb_rdata[3]),
@@ -344,10 +342,10 @@ module top (
 		.WIDTH(16),
 		.DITHER("YES")
 	) audio_pdm_I (
-		.in(audio_l),
+		.in(audio_out_pdm),
 		.pdm(audio_pdm),
 		.oe(1'b1),
-		.clk(clk),
+		.clk(clk_48m),
 		.rst(rst)
 	);
 

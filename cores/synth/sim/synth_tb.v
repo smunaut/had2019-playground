@@ -56,7 +56,7 @@ module synth_tb;
 	// Reset pulse
 	initial begin
 		# 31 rst = 0;
-		# 20000000 $finish;
+		# 500000 $finish;
 	end
 
 	// Clocks
@@ -143,16 +143,17 @@ module synth_tb;
 			for (j=0; j<8; j++)
 				cfg_voice_write(i, j, 32'h00000000);
 
-		cfg_voice_write(0, 0, 32'h00000005);
-		cfg_voice_write(0, 2, 32'h00008000);
-		cfg_voice_write(0, 3, 32'h00001000);
-		cfg_voice_write(0, 4, 32'h0000f0f0);
+		cfg_voice_write(0, 0, 32'h00000001);
+		cfg_voice_write(0, 2, 32'h00001000);
+		cfg_voice_write(0, 3, 32'h00000000);
+		cfg_voice_write(0, 4, 32'h0000ffff);
 		cfg_voice_write(0, 5, 32'h00000040);
-		cfg_voice_write(0, 6, 32'h00001040);
-		cfg_voice_write(0, 7, 32'h00001040);
+		cfg_voice_write(0, 6, 32'h000000ff);
+		cfg_voice_write(0, 7, 32'h00000000);
 
 		cfg_global_write(0, 32'h0000001e);
-		cfg_global_write(3, 32'h00000001);
+		cfg_global_write(1, 32'h000000ff);
+		cfg_global_write(2, 32'h00000001);
 
 	end
 

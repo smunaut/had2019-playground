@@ -42,14 +42,43 @@ struct qpi_test {
 static volatile struct qpi_test * const qpi_test_regs = (void*)(QPI_TEST_BASE);
 
 
-struct synth {
-	struct {
-		uint32_t r[8];
-	} voice[16];
-	uint32_t global[128];
+struct audio {
+	uint32_t csr;
+	uint32_t evt;
+	uint32_t pcm_cfg;
+	uint32_t pcm_data;
 } __attribute__((packed,aligned(4)));
 
-static volatile struct synth * const synth_regs = (void*)(SYNTH_BASE);
+struct synth {
+	/* Per-Voice registers */
+	struct {
+		uint32_t ctrl;
+		uint32_t _rsvd;
+		uint32_t phase_inc;
+		uint32_t phase_cmp;
+		uint32_t volume;
+		uint32_t duration;
+		uint32_t attack;
+		uint32_t decay;
+	} voice[16];
+
+	/* Global register */
+	uint32_t samplerate_div;
+	uint32_t volume;
+	uint32_t voice_force;
+	uint32_t voice_start;
+	uint32_t _rsvd[4];
+
+	/* Commands (only valid for queuing !!!) */
+	uint32_t cmd_wait;
+	uint32_t cmd_gen_event;
+
+} __attribute__((packed,aligned(4)));
+
+static volatile struct audio * const audio_regs  = (void*)((AUDIO_BASE) + 0x00000);
+static volatile uint32_t *     const synth_wt    = (void*)((AUDIO_BASE) + 0x10000);
+static volatile struct synth * const synth_now   = (void*)((AUDIO_BASE) + 0x20000);
+static volatile struct synth * const synth_queue = (void*)((AUDIO_BASE) + 0x30000);
 
 static void
 yolo(void)
@@ -132,25 +161,39 @@ void main()
 	psram_init();
 
 	/* Synth */
-	synth_regs->voice[0].r[0] = 0x00000005;	/* Control */
-        synth_regs->voice[0].r[2] = 0x00000400;	/* Phase INC */
-        synth_regs->voice[0].r[3] = 0x00001000;	/* Phase CMP */
-        synth_regs->voice[0].r[4] = 0x00004040;	/* Volume */
-        synth_regs->voice[0].r[5] = 0x00000010;	/* Duration */
-        synth_regs->voice[0].r[6] = 0x00000110;	/* Attack config */
-        synth_regs->voice[0].r[7] = 0x0000ff40;	/* Decay config */
+	synth_now->voice[0].ctrl      = 0x00000005;	/* Control */
+        synth_now->voice[0].phase_inc = 0x00000400;	/* Phase INC */
+        synth_now->voice[0].phase_cmp = 0x00001000;	/* Phase CMP */
+        synth_now->voice[0].volume    = 0x00004040;	/* Volume */
+        synth_now->voice[0].duration  = 0x00000010;	/* Duration */
+        synth_now->voice[0].attack    = 0x00000110;	/* Attack config */
+        synth_now->voice[0].decay     = 0x0000ff40;	/* Decay config */
 
-	synth_regs->voice[1].r[0] = 0x0000000d;	/* Control */
-        synth_regs->voice[1].r[2] = 0x00008000;	/* Phase INC */
-        synth_regs->voice[1].r[3] = 0x00001000;	/* Phase CMP */
-        synth_regs->voice[1].r[4] = 0x0000f0f0;	/* Volume */
-        synth_regs->voice[1].r[5] = 0x00000040;	/* Duration */
-        synth_regs->voice[1].r[6] = 0x0000c001;	/* Attack config */
-        synth_regs->voice[1].r[7] = 0x0000c001;	/* Decay config */
+	synth_now->samplerate_div = 0x000003e6;	/* Divider */
+	synth_now->volume         = 0x000000ff;	/* Global Volume */
+	synth_now->voice_force    = 0x00000001;	/* Voice force gate */
 
-	synth_regs->global[0] = 0x000003e6;	/* Divider */
-	synth_regs->global[1] = 0x000000ff;	/* Global Volume */
-	//synth_regs->global[2] = 0x00000001;	/* Voice force gate */
+	printf("\n");
+	printf("Synth[0]: %08x\n", synth_now->samplerate_div);
+	printf("Synth[1]: %08x\n", synth_now->volume);
+	printf("Synth[2]: %08x\n", synth_now->voice_force);
+
+	printf("Audio[0]: %08x\n", audio_regs->csr);
+	printf("Audio[1]: %08x\n", audio_regs->evt);
+	printf("Audio[2]: %08x\n", audio_regs->pcm_cfg);
+
+	audio_regs->pcm_cfg = (1 << 31);
+
+	for (int i=0; i<50; i++) {
+		synth_queue->voice_force = 0;
+		synth_queue->cmd_wait = 10000;
+		synth_queue->voice_force = 1;
+		synth_queue->cmd_wait = 10000;
+        	synth_queue->voice[0].phase_inc = 0x100 * i;
+	}
+
+	for (int i=0; i<50; i++)
+		printf("Audio[0]: %08x\n", audio_regs->csr);
 
 
 	/* Main loop */
@@ -174,32 +217,6 @@ void main()
 
 			switch (cmd)
 			{
-			case'0':
-				synth_regs->voice[1].r[0] = 0x00000001;	/* Control */
-				break;
-			case'1':
-				synth_regs->voice[1].r[0] = 0x00000005;	/* Control */
-				break;
-			case'2':
-				synth_regs->voice[1].r[0] = 0x00000009;	/* Control */
-				break;
-			case'3':
-				synth_regs->voice[1].r[0] = 0x0000000d;	/* Control */
-				break;
-			case '4':
-				synth_regs->voice[1].r[6] = 0x0000c001;	/* Attack config */
-				synth_regs->voice[1].r[7] = 0x0000c001;	/* Decay config */
-				break;
-			case '5':
-				synth_regs->voice[1].r[6] = 0x00001010;	/* Attack config */
-				synth_regs->voice[1].r[7] = 0x00001010;	/* Decay config */
-				break;
-
-
-			case 's':
-				synth_regs->global[3] = 0x00000002;	/* Voice force gate */
-				break;
-
 			case 'e':
 				psram_qpi_enter();
 				break;

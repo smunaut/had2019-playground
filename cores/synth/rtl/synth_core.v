@@ -37,7 +37,7 @@
 `default_nettype none
 
 module synth_core #(
-	parameter integer DIV_WIDTH  = 10,
+	parameter integer DIV_WIDTH  = 11,
 	parameter integer PHASE_INT  = 14,
 	parameter integer PHASE_FRAC =  5,
 	parameter integer PHASE_INC  = 16
@@ -56,6 +56,17 @@ module synth_core #(
 	input  wire [ 2:0] cb_reg,
 	input  wire cb_stb_v,			// Per-voice setting
 	input  wire cb_stb_g,			// Global settings
+
+	// Config read-back for global regs
+	input  wire [ 2:0] crb_reg,
+	output reg  [31:0] crb_data,
+
+	// Status output
+	output reg stb_sample,			// 1 every sample
+	output reg stb_tick_fast,		// 1 every 16 samples
+	output reg stb_tick_slow,		// 1 every 256 samples
+
+	output reg [4:0] active_voices,	// 0-16
 
 	// Clock / Reset
 	input  wire clk,
@@ -96,8 +107,8 @@ module synth_core #(
 
 	reg active_0, active_1, active_2;
 	reg [3:0] ctx_0, ctx_1, ctx_2;
-	reg ctx_first_0;
-	reg ctx_last_0, ctx_last_1;
+	reg ctx_first_0, ctx_first_1;
+	reg ctx_last_0, ctx_last_1, ctx_last_2;
 
 	reg  [4:0] fast_cnt_1;
 	wire fast_tick_1;
@@ -144,6 +155,9 @@ module synth_core #(
 	wire [PHASE_INT-1:0] oo_out_wt_2;
 	reg  [PHASE_INT-1:0] oo_out_3;
 
+	// Status
+	reg  [4:0] active_voices_cnt;
+
 
 	// Configuration register
 	// ----------------------
@@ -151,9 +165,9 @@ module synth_core #(
 	// Globals
 	always @(posedge clk)
 		if (rst)
-			cfg_div <= 12'h3e6;
+			cfg_div <= 998;
 		else if (cb_stb_g && (cb_reg == 3'h0))
-			cfg_div <= cb_data[11:0];
+			cfg_div <= cb_data[DIV_WIDTH-1:0];
 
 	always @(posedge clk)
 		if (rst)
@@ -174,6 +188,15 @@ module synth_core #(
 			cfg_voice_start <=
 				((cb_stb_g && (cb_reg == 3'h3)) ? cb_data[15:0] : 16'h0000) |
 				(ctx_first_0 ? 16'h0000 : cfg_voice_start);
+
+	always @(*)
+		case (crb_reg)
+			3'h0:    crb_data = { {(32-DIV_WIDTH){1'b0}}, cfg_div };
+			3'h1:    crb_data = { 24'h000000, cfg_vol };
+			3'h2:    crb_data = { 16'h0000, cfg_voice_force };
+			3'h3:    crb_data = { 16'h0000, cfg_voice_start };
+			default: crb_data = 32'hxxxxxxxx;
+		endcase
 
 	// Per-voice
 	synth_cfg_reg #(
@@ -275,7 +298,7 @@ module synth_core #(
 	// ----
 
 	// RNG
-	rng rng_I (
+	synth_rng rng_I (
 		.out(rng),
 		.clk(clk),
 		.rst(rst)
@@ -316,13 +339,15 @@ module synth_core #(
 	// Delay for write back
 	always @(posedge clk)
 		if (rst) begin
-			{ ctx_2,    ctx_1    } <= 2'b00;
-			{ active_2, active_1 } <= 2'b00;
-			ctx_last_1 <= 1'b0;
+			{ ctx_2,      ctx_1      } <= 2'b00;
+			{ active_2,   active_1   } <= 2'b00;
+			{ ctx_last_2, ctx_last_1 } <= 2'b00;
+			ctx_first_1 <= 1'b0;
 		end else begin
-			{ ctx_2,    ctx_1    } <= { ctx_1,       ctx_0       };
-			{ active_2, active_1 } <= { active_1,    active_0    };
-			ctx_last_1 <= ctx_last_0;
+			{ ctx_2,      ctx_1      } <= { ctx_1,      ctx_0      };
+			{ active_2,   active_1   } <= { active_1,   active_0   };
+			{ ctx_last_2, ctx_last_1 } <= { ctx_last_1, ctx_last_0 };
+			ctx_first_1 <= ctx_first_0;
 		end
 
 	// 1/16th sub divider to generate a fast strobe
@@ -579,5 +604,29 @@ module synth_core #(
 		.clk(clk),
 		.rst(rst)
 	);
+
+
+	// External status reporting
+	// -------------------------
+
+	// Strobes
+	always @(posedge clk)
+		if (rst) begin
+			stb_sample    <= 1'b0;
+			stb_tick_fast <= 1'b0;
+			stb_tick_slow <= 1'b0;
+		end else begin
+			stb_sample    <= active_1 & ctx_last_1;
+			stb_tick_fast <= active_1 & ctx_last_1 & fast_tick_1;
+			stb_tick_slow <= active_1 & ctx_last_1 & slow_tick_1;
+		end
+
+	// Active voices
+	always @(posedge clk)
+		active_voices_cnt <= (ctx_first_1 ? 5'h00 : active_voices_cnt) + (env_state_1 != ES_OFF ? 1 : 0);
+
+	always @(posedge clk)
+		if (ctx_last_2)
+			active_voices <= active_voices_cnt;
 
 endmodule // synth_core

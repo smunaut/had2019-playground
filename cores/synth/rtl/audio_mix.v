@@ -1,9 +1,10 @@
 /*
- * rng.v
+ * audio_mix.v
  *
  * vim: ts=4 sw=4
  *
- * Simple RNG with a couple of LFSR
+ * Audio: Final mixing combining PCM and synthesizer and dealing with PDM DC
+ *        level auto-adjust.
  *
  * Copyright (C) 2019  Sylvain Munaut <tnt@246tNt.com>
  * All rights reserved.
@@ -35,67 +36,69 @@
 
 `default_nettype none
 
-// ---------------------------------------------------------------------------
-// Main RNG
-// ---------------------------------------------------------------------------
+module audio_mix (
+	// Synth input
+	input  wire [15:0] synth_l,
+	input  wire [15:0] synth_r,
 
-module rng(
-	output reg  [15:0] out,
+	input  wire [ 4:0] synth_voices,
+
+	// PCM input
+	input  wire [15:0] pcm,
+
+	input  wire [ 7:0] pcm_vol_l,
+	input  wire [ 7:0] pcm_vol_r,
+
+	input  wire pcm_ena,
+
+	// Outputs
+	output wire [15:0] out_l,
+	output wire [15:0] out_r,
+	output reg  [15:0] out_pdm,
+
+	// Clock / Reset
 	input  wire clk,
 	input  wire rst
 );
 
 	// Signals
-	wire [4:0] out5, out5rev;
-	wire [15:0] out16;
+	reg  [35:0] m_l;
+	reg  [35:0] m_r;
 
-	// Instanciate 4 LFSRs of different lengths
-	lfsr #(.WIDTH( 5), .POLY( 5'b01001)) lfsr5  (.out(out5),  .clk(clk), .rst(rst));
-	lfsr #(.WIDTH(16), .POLY(16'h6701 )) lfsr16 (.out(out16), .clk(clk), .rst(rst));
+	reg  [35:0] pa_l;
+	reg  [35:0] pa_r;
 
-	// Reverse the 5 bit LFSR output
-	genvar i;
-	generate
-		for (i=0; i<5; i=i+1)
-			assign out5rev[i] = out5[4-i];
-	endgenerate
+	reg  [15:0] pdm_offset;
 
-	// Combine the outputs 'somehow'
+	// PCM volume
 	always @(posedge clk)
-		out <= {
-			out16[15:11] ^ out5rev,		// 5 bits
-			out16[10: 6] ^ out5,		// 5 bits
-			out16[5],					// 1 bit
-			out16[4:0] ^ out5rev		// 5 bits
-		};
+		if (~pcm_ena) begin
+			m_l <= 36'h000000000;
+			m_r <= 36'h000000000;
+		end else begin
+			m_l <= $signed({pcm[15], pcm[15], pcm}) * { 10'd0, pcm_vol_l };
+			m_r <= $signed({pcm[15], pcm[15], pcm}) * { 10'd0, pcm_vol_l };
+		end
 
-endmodule // rng
-
-
-// ---------------------------------------------------------------------------
-// LFSR sub module
-// ---------------------------------------------------------------------------
-
-module lfsr #(
-	parameter integer WIDTH = 8,
-	parameter POLY = 8'h71
-)(
-	output reg  [WIDTH-1:0] out,
-	input  wire clk,
-	input  wire rst
-);
-
-	// Signals
-	wire fb;
-
-	// Linear Feedback
-	assign fb = ^(out & POLY);
-
-	// Register
+	// Post adder
 	always @(posedge clk)
-		if (rst)
-			out <= { {(WIDTH-1){1'b0}}, 1'b1 };
+	begin
+		pa_l <= { {(12){synth_l[15]}}, synth_l, 8'h00 } + m_l;
+		pa_r <= { {(12){synth_r[15]}}, synth_r, 8'h00 } + m_r;
+	end
+
+	// Done for the 'normal' outputs
+	assign out_l = pa_l[23:8];
+	assign out_r = pa_r[23:8];
+
+	// Apply variable DC offset for PDM output
+	always @(*)
+		if (pcm_ena)
+			pdm_offset = 16'h8000;
 		else
-			out <= { fb, out[WIDTH-1:1] };
+			pdm_offset = { synth_voices, 11'b0 };
 
-endmodule // lfsr
+	always @(posedge clk)
+		out_pdm <= out_l + pdm_offset;
+
+endmodule // audio_mix

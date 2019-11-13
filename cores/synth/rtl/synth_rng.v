@@ -1,9 +1,9 @@
 /*
- * synth_mix.v
+ * synth_rng.v
  *
  * vim: ts=4 sw=4
  *
- * Audio synthesizer: Final mixing and volume scaling
+ * Simple RNG with a couple of LFSR
  *
  * Copyright (C) 2019  Sylvain Munaut <tnt@246tNt.com>
  * All rights reserved.
@@ -35,77 +35,67 @@
 
 `default_nettype none
 
-module synth_mix #(
-	parameter integer IN_WIDTH = 14,
-	parameter integer SHIFT = 0
-)(
-	// Volume settings
-	input  wire [ 7:0] vol_global_1,
-	input  wire [ 7:0] vol_envelope_1,
-	input  wire [ 7:0] vol_voice_l_2,
-	input  wire [ 7:0] vol_voice_r_2,
+// ---------------------------------------------------------------------------
+// Main RNG
+// ---------------------------------------------------------------------------
 
-	// Control
-	input  wire first_0,
-	input  wire last_0,
-
-	// Data
-	input  wire [IN_WIDTH-1:0] in_data_3,
-
-	// Output
-	output reg [15:0] out_l,
-	output reg [15:0] out_r,
-
-	// Clock / Reset
+module synth_rng (
+	output reg  [15:0] out,
 	input  wire clk,
 	input  wire rst
 );
+
 	// Signals
-	reg  [35:0] vol_ge_2;
-	reg  [35:0] vol_l_3,    vol_r_3;
-	reg  [35:0] data_l_4,   data_r_4;
-	wire [15:0] sum_in_l_4, sum_in_r_4;
-	reg  [15:0] sum_l_5,    sum_r_5;
-	wire first_4;
-	wire last_5;
+	wire [4:0] out5, out5rev;
+	wire [15:0] out16;
 
-	// Control delay
-	delay_bit #(4) dly_first ( first_0, first_4, clk );
-	delay_bit #(5) dly_last  ( last_0,  last_5,  clk );
+	// Instanciate 4 LFSRs of different lengths
+	synth_lfsr #(.WIDTH( 5), .POLY( 5'b01001)) lfsr5  (.out(out5),  .clk(clk), .rst(rst));
+	synth_lfsr #(.WIDTH(16), .POLY(16'h6701 )) lfsr16 (.out(out16), .clk(clk), .rst(rst));
 
-	// Combine envelope volume with global one
+	// Reverse the 5 bit LFSR output
+	genvar i;
+	generate
+		for (i=0; i<5; i=i+1)
+			assign out5rev[i] = out5[4-i];
+	endgenerate
+
+	// Combine the outputs 'somehow'
 	always @(posedge clk)
-		vol_ge_2 <= $signed({10'h000, vol_global_1}) * $signed({10'h000, vol_envelope_1});
+		out <= {
+			out16[15:11] ^ out5rev,		// 5 bits
+			out16[10: 6] ^ out5,		// 5 bits
+			out16[5],					// 1 bit
+			out16[4:0] ^ out5rev		// 5 bits
+		};
 
-	// Combine left / right channel volumes
+endmodule // synth_rng
+
+
+// ---------------------------------------------------------------------------
+// LFSR sub module
+// ---------------------------------------------------------------------------
+
+module synth_lfsr #(
+	parameter integer WIDTH = 8,
+	parameter POLY = 8'h71
+)(
+	output reg  [WIDTH-1:0] out,
+	input  wire clk,
+	input  wire rst
+);
+
+	// Signals
+	wire fb;
+
+	// Linear Feedback
+	assign fb = ^(out & POLY);
+
+	// Register
 	always @(posedge clk)
-	begin
-		vol_l_3 <= $signed(vol_ge_2[17:0]) * $signed({10'h000, vol_voice_l_2});
-		vol_r_3 <= $signed(vol_ge_2[17:0]) * $signed({10'h000, vol_voice_r_2});
-	end
+		if (rst)
+			out <= { {(WIDTH-1){1'b0}}, 1'b1 };
+		else
+			out <= { fb, out[WIDTH-1:1] };
 
-	// Apply volume to input data
-	always @(posedge clk)
-	begin
-		data_l_4 <= $signed(in_data_3) * $signed({2'b00, vol_l_3[23:8]});
-		data_r_4 <= $signed(in_data_3) * $signed({2'b00, vol_r_3[23:8]});
-	end
-
-	// Summing
-	assign sum_in_l_4 = data_l_4[31-SHIFT:16-SHIFT];
-	assign sum_in_r_4 = data_l_4[31-SHIFT:16-SHIFT];
-
-	always @(posedge clk)
-	begin
-		sum_l_5 <= sum_in_l_4 + (first_4 ? 16'h0000 : sum_l_5);
-		sum_r_5 <= sum_in_r_4 + (first_4 ? 16'h0000 : sum_r_5);
-	end
-
-	// Final capture
-	always @(posedge clk)
-		if (last_5) begin
-			out_l <= sum_l_5;
-			out_r <= sum_l_5;
-		end
-
-endmodule // synth_mix
+endmodule // synth_lfsr
