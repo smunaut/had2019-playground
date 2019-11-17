@@ -53,7 +53,7 @@ module top (
 
 	// Params
 	localparam integer N_BANKS  = 2;
-	localparam integer N_ROWS   = 32;
+	localparam integer N_ROWS   = 16;
 	localparam integer N_COLS   = 64;
 	localparam integer N_CHANS  = 3;
 	localparam integer N_PLANES = 10;
@@ -93,40 +93,40 @@ module top (
 	// Hub75 driver
 	// ------------
 
-//	hub75_top #(
-//		.N_BANKS(N_BANKS),
-//		.N_ROWS(N_ROWS),
-//		.N_COLS(N_COLS),
-//		.N_CHANS(N_CHANS),
-//		.N_PLANES(N_PLANES),
-//		.BITDEPTH(BITDEPTH),
-//		.PANEL_INIT("FM6126"),
-//		.SCAN_MODE("ZIGZAG")
-//	) hub75_I (
-//		.hub75_addr(hub75_addr),
-//		.hub75_data(hub75_data),
-//		.hub75_clk(hub75_clk),
-//		.hub75_le(hub75_le),
-//		.hub75_blank(hub75_blank),
-//		.fbw_bank_addr(fbw_bank_addr),
-//		.fbw_row_addr(fbw_row_addr),
-//		.fbw_row_store(fbw_row_store),
-//		.fbw_row_rdy(fbw_row_rdy),
-//		.fbw_row_swap(fbw_row_swap),
-//		.fbw_data(fbw_data),
-//		.fbw_col_addr(fbw_col_addr),
-//		.fbw_wren(fbw_wren),
-//		.frame_swap(frame_swap),
-//		.frame_rdy(frame_rdy),
-//		.ctrl_run(ctrl_run),
-//		.cfg_pre_latch_len(8'h80),
-//		.cfg_latch_len(8'h80),
-//		.cfg_post_latch_len(8'h80),
-//		.cfg_bcm_bit_len(8'h06),
-//		.clk(clk),
-//		.clk_2x(clk_2x),
-//		.rst(rst)
-//	);
+	hub75_top #(
+		.N_BANKS(N_BANKS),
+		.N_ROWS(N_ROWS),
+		.N_COLS(N_COLS),
+		.N_CHANS(N_CHANS),
+		.N_PLANES(N_PLANES),
+		.BITDEPTH(BITDEPTH),
+		.PANEL_INIT("FM6126"),
+		.SCAN_MODE("ZIGZAG")
+	) hub75_I (
+		.hub75_addr(hub75_addr),
+		.hub75_data(hub75_data),
+		.hub75_clk(hub75_clk),
+		.hub75_le(hub75_le),
+		.hub75_blank(hub75_blank),
+		.fbw_bank_addr(fbw_bank_addr),
+		.fbw_row_addr(fbw_row_addr),
+		.fbw_row_store(fbw_row_store),
+		.fbw_row_rdy(fbw_row_rdy),
+		.fbw_row_swap(fbw_row_swap),
+		.fbw_data(fbw_data),
+		.fbw_col_addr(fbw_col_addr),
+		.fbw_wren(fbw_wren),
+		.frame_swap(frame_swap),
+		.frame_rdy(frame_rdy),
+		.ctrl_run(ctrl_run),
+		.cfg_pre_latch_len(8'h80),
+		.cfg_latch_len(8'h80),
+		.cfg_post_latch_len(8'h80),
+		.cfg_bcm_bit_len(8'h06),
+		.clk(clk),
+		.clk_2x(clk_2x),
+		.rst(rst)
+	);
 
 	// Only start the scan when we have our first frame
 	always @(posedge clk or posedge rst)

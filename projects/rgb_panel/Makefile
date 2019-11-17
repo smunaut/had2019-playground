@@ -1,7 +1,7 @@
 # Project config
 PROJ = rgb_panel
 
-PROJ_DEPS := misc # hub75 spi_flash spi_slave
+PROJ_DEPS := misc hub75
 PROJ_RTL_SRCS := $(addprefix rtl/, \
 	pgen.v \
 	sysmgr.v \
