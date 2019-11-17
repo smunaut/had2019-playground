@@ -49,7 +49,7 @@ IOBUF PORT "btn[7]" IO_TYPE=LVCMOS33 PULLMODE=UP;
 #                                       func    cart pin    genio
 LOCATE COMP "hub75_data[5]" SITE "A7"; # b1     17          9
 LOCATE COMP "hub75_data[4]" SITE "C7"; # g1     16          8
-LOCATE COMP "hub75_data[3]" SITE "D8"; # r1     19          11
+LOCATE COMP "hub75_data[3]" SITE "B8"; # r1     19          11
 LOCATE COMP "hub75_data[2]" SITE "D9"; # b0     21          13
 LOCATE COMP "hub75_data[1]" SITE "C8"; # g0     18          10
 LOCATE COMP "hub75_data[0]" SITE "B9"; # r0     23          15
