@@ -46,20 +46,21 @@ IOBUF PORT "btn[7]" IO_TYPE=LVCMOS33 PULLMODE=UP;
 # Generic IO
 # see https://github.com/mattvenn/hackaday-supercon-hub75-cartridge for PCB details
 # on this pcb addr[4] isn't connected on the pcb, if need 5 bit address, bodge wire from pin next to g0 to the spare pad on hub75 socket
-LOCATE COMP "hub75_data[5]" SITE "C8"; # b1
-LOCATE COMP "hub75_data[4]" SITE "D6"; # g1
-LOCATE COMP "hub75_data[3]" SITE "A8"; # r1
-LOCATE COMP "hub75_data[2]" SITE "C9"; # b0
-LOCATE COMP "hub75_data[1]" SITE "A7"; # g0
-LOCATE COMP "hub75_data[0]" SITE "A9"; # r0
-LOCATE COMP "hub75_addr[4]" SITE "B8"; # bodge this pin
-LOCATE COMP "hub75_addr[3]" SITE "A5";
-LOCATE COMP "hub75_addr[2]" SITE "A6";
-LOCATE COMP "hub75_addr[1]" SITE "B6";
-LOCATE COMP "hub75_addr[0]" SITE "C7";
-LOCATE COMP "hub75_clk"     SITE "C6";
-LOCATE COMP "hub75_le"      SITE "C5";
-LOCATE COMP "hub75_blank"   SITE "B5";
+#                                       func    cart pin    genio
+LOCATE COMP "hub75_data[5]" SITE "A7"; # b1     17          9
+LOCATE COMP "hub75_data[4]" SITE "C7"; # g1     16          8
+LOCATE COMP "hub75_data[3]" SITE "D8"; # r1     19          11
+LOCATE COMP "hub75_data[2]" SITE "D9"; # b0     21          13
+LOCATE COMP "hub75_data[1]" SITE "C8"; # g0     18          10
+LOCATE COMP "hub75_data[0]" SITE "B9"; # r0     23          15
+LOCATE COMP "hub75_addr[4]" SITE "A8"; # bodge this pin 20  12
+LOCATE COMP "hub75_addr[3]" SITE "C6"; #        12          4
+LOCATE COMP "hub75_addr[2]" SITE "B6"; #        13          5
+LOCATE COMP "hub75_addr[1]" SITE "A6"; #        14          6
+LOCATE COMP "hub75_addr[0]" SITE "D6"; #        15          7
+LOCATE COMP "hub75_clk"     SITE "A5"; #        11          3
+LOCATE COMP "hub75_le"      SITE "B5"; #        10          2
+LOCATE COMP "hub75_blank"   SITE "C5"; #        9           1
 
 IOBUF PORT "hub75_data[5]" IO_TYPE=LVCMOS33;
 IOBUF PORT "hub75_data[4]" IO_TYPE=LVCMOS33;
