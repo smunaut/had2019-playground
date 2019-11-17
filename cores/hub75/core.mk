@@ -8,6 +8,7 @@ RTL_SRCS_hub75 := $(addprefix rtl/, \
 	hub75_colormap.v \
 	hub75_fb_readout.v \
 	hub75_fb_writein.v \
+	hub75_fb_mem.v \
 	hub75_framebuffer.v \
 	hub75_gamma.v \
 	hub75_init_inject.v \

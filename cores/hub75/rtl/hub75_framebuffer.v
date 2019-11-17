@@ -234,17 +234,15 @@ module hub75_framebuffer #(
 			for (j=0; j<SPRAM_WIDE; j=j+1)
 			begin
 
-				SB_SPRAM256KA mem_I (
-					.DATAIN(mem_di[16*j+15:16*j]),
-					.ADDRESS(mem_addr),
-					.MASKWREN(mem_mask),
-					.WREN(mem_wren[i]),
-					.CHIPSELECT(1'b1),
-					.CLOCK(clk),
-					.STANDBY(1'b0),
-					.SLEEP(1'b0),
-					.POWEROFF(1'b1),
-					.DATAOUT(mem_do[i][16*j+15:16*j])
+				hub75_fb_mem mem_I (
+					.wr_addr(mem_addr),
+					.wr_data(mem_di[16*j+15:16*j]),
+					.wr_mask(mem_mask),
+					.wr_ena(mem_wren[i]),
+					.rd_addr(mem_addr),
+					.rd_data(mem_do[i][16*j+15:16*j]),
+					.rd_ena(1'b1),
+					.clk(clk)
 				);
 
 			end

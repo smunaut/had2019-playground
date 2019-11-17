@@ -60,110 +60,97 @@ module hub75_phy #(
 	input  wire rst
 );
 	// Signals
-	reg phy_clk_f;
+		// Delay to match DDR clk output
+	wire phy_addr_inc_d;
+	wire phy_addr_rst_d;
+	wire [LOG_N_ROWS-1:0] phy_addr_d;
+	wire [SDW-1:0] phy_data_d;
+	wire phy_le_d;
+	wire phy_blank_d;
 
 	// Address
 	genvar i;
 	generate
 		if (PHY_AIR == 0) begin
 			for (i=0; i<PHY_N; i=i+1)
-				SB_IO #(
-					.PIN_TYPE(6'b010100),
-					.PULLUP(1'b0),
-					.NEG_TRIGGER(1'b0),
-					.IO_STANDARD("SB_LVCMOS")
-				) iob_addr_I[LOG_N_ROWS-1:0] (
-					.PACKAGE_PIN(hub75_addr[i*LOG_N_ROWS+:LOG_N_ROWS]),
-					.CLOCK_ENABLE(1'b1),
-					.OUTPUT_CLK(clk),
-					.D_OUT_0(phy_addr)
-				);
-		end else begin
-			SB_IO #(
-				.PIN_TYPE(6'b010100),
-				.PULLUP(1'b0),
-				.NEG_TRIGGER(1'b0),
-				.IO_STANDARD("SB_LVCMOS")
-			) iob_addr_inc_I[PHY_N-1:0] (
-				.PACKAGE_PIN(hub75_addr_inc),
-				.CLOCK_ENABLE(1'b1),
-				.OUTPUT_CLK(clk),
-				.D_OUT_0(phy_addr_inc ^ PHY_AIR[1])
-			);
+			begin
+				delay_bus #(2, LOG_N_ROWS) dly_addr_I (phy_addr, phy_addr_d, clk);
 
-			SB_IO #(
-				.PIN_TYPE(6'b010100),
-				.PULLUP(1'b0),
-				.NEG_TRIGGER(1'b0),
-				.IO_STANDARD("SB_LVCMOS")
-			) iob_addr_rst_I[PHY_N-1:0] (
-				.PACKAGE_PIN(hub75_addr_rst),
-				.CLOCK_ENABLE(1'b1),
-				.OUTPUT_CLK(clk),
-				.D_OUT_0(phy_addr_rst ^ PHY_AIR[2])
-			);
+				OFS1P3DX ior_addr_I[LOG_N_ROWS-1:0] (
+					.CD(rst),
+					.D(phy_addr_d),
+					.SP(1'b1),
+					.SCLK(clk),
+					.Q(hub75_addr[i*LOG_N_ROWS+:LOG_N_ROWS])
+				);
+			end
+		end else begin
+//			SB_IO #(
+//				.PIN_TYPE(6'b010100),
+//				.PULLUP(1'b0),
+//				.NEG_TRIGGER(1'b0),
+//				.IO_STANDARD("SB_LVCMOS")
+//			) iob_addr_inc_I[PHY_N-1:0] (
+//				.PACKAGE_PIN(hub75_addr_inc),
+//				.CLOCK_ENABLE(1'b1),
+//				.OUTPUT_CLK(clk),
+//				.D_OUT_0(phy_addr_inc ^ PHY_AIR[1])
+//			);
+//
+//			SB_IO #(
+//				.PIN_TYPE(6'b010100),
+//				.PULLUP(1'b0),
+//				.NEG_TRIGGER(1'b0),
+//				.IO_STANDARD("SB_LVCMOS")
+//			) iob_addr_rst_I[PHY_N-1:0] (
+//				.PACKAGE_PIN(hub75_addr_rst),
+//				.CLOCK_ENABLE(1'b1),
+//				.OUTPUT_CLK(clk),
+//				.D_OUT_0(phy_addr_rst ^ PHY_AIR[2])
+//			);
 		end
 	endgenerate
 
 	// Data lines
-	SB_IO #(
-		.PIN_TYPE(6'b010100),
-		.PULLUP(1'b0),
-		.NEG_TRIGGER(1'b0),
-		.IO_STANDARD("SB_LVCMOS")
-	) iob_data_I[SDW-1:0] (
-		.PACKAGE_PIN(hub75_data),
-		.CLOCK_ENABLE(1'b1),
-		.OUTPUT_CLK(clk),
-		.D_OUT_0(phy_data)
+	delay_bus #(2, SDW) dly_data_I (phy_data, phy_data_d, clk);
+
+	OFS1P3DX ior_data_I[SDW-1:0] (
+		.CD(rst),
+		.D(phy_data_d),
+		.SP(1'b1),
+		.SCLK(clk),
+		.Q(hub75_data)
 	);
 
-	// Falling edge clock, so we need one more delay so it's not too early !
-	always @(posedge clk or posedge rst)
-		if (rst) begin
-			phy_clk_f <= 1'b0;
-		end else begin
-			phy_clk_f <= phy_clk;
-		end
-
 	// Clock DDR register
-	SB_IO #(
-		.PIN_TYPE(6'b010000),
-		.PULLUP(1'b0),
-		.NEG_TRIGGER(1'b0),
-		.IO_STANDARD("SB_LVCMOS")
-	) iob_clk_I[PHY_N-1:0] (
-		.PACKAGE_PIN(hub75_clk),
-		.CLOCK_ENABLE(1'b1),
-		.OUTPUT_CLK(clk),
-		.D_OUT_0(1'b0),
-		.D_OUT_1(phy_clk_f)
+	ODDRX1F ior_clk_I[PHY_N-1:0] (
+		.D0(1'b0),
+		.D1(phy_clk),
+		.RST(1'b0),
+		.SCLK(clk),
+		.Q(hub75_clk)
 	);
 
 	// Latch
-	SB_IO #(
-		.PIN_TYPE(6'b010100),
-		.PULLUP(1'b0),
-		.NEG_TRIGGER(1'b0),
-		.IO_STANDARD("SB_LVCMOS")
-	) iob_le_I[PHY_N-1:0] (
-		.PACKAGE_PIN(hub75_le),
-		.CLOCK_ENABLE(1'b1),
-		.OUTPUT_CLK(clk),
-		.D_OUT_0(phy_le)
+	delay_bit #(2) dly_le_I (phy_le, phy_le_d, clk);
+
+	OFS1P3DX ior_le_I[PHY_N-1:0] (
+		.CD(rst),
+		.D(phy_le_d),
+		.SP(1'b1),
+		.SCLK(clk),
+		.Q(hub75_le)
 	);
 
 	// Blanking
-	SB_IO #(
-		.PIN_TYPE(6'b010100),
-		.PULLUP(1'b0),
-		.NEG_TRIGGER(1'b0),
-		.IO_STANDARD("SB_LVCMOS")
-	) iob_blank_I[PHY_N-1:0] (
-		.PACKAGE_PIN(hub75_blank),
-		.CLOCK_ENABLE(1'b1),
-		.OUTPUT_CLK(clk),
-		.D_OUT_0(phy_blank)
+	delay_bit #(2) dly_blank_I (phy_blank, phy_blank_d, clk);
+
+	OFS1P3DX ior_blank_I[PHY_N-1:0] (
+		.CD(rst),
+		.D(phy_blank_d),
+		.SP(1'b1),
+		.SCLK(clk),
+		.Q(hub75_blank)
 	);
 
 endmodule
