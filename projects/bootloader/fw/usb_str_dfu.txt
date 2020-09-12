@@ -1,10 +1,7 @@
 0000000000000000
-HACKADAY
-Supercon 2019 badge (DFU)
+NitroFPGA
+OrangeCrab (no2bootloader DFU)
 DFU
-ECP5 bitstream (SoC)
-RISC-V firmware (IPL)
-Cartridge ECP5 bitstream (SoC)
-Cartridge RISC-V firmware (IPL)
-Cartridge main FS region
+ECP5 bitstream
+RISC-V firmware
 Bootloader

@@ -136,7 +136,6 @@ static struct {
 		uint32_t addr_prog;
 		uint32_t addr_erase;
 		uint32_t addr_end;
-		uint32_t selected;
 
 		int op_ofs;
 		int op_len;
@@ -150,16 +149,12 @@ static struct {
 } g_dfu;
 
 static const struct {
-	uint32_t flashsel;
 	uint32_t start;
 	uint32_t end;
-} dfu_zones[6] = {
-	{ FLASHCHIP_INTERNAL, 0x00180000, 0x00300000 },	/* ECP5 bitstream */
-	{ FLASHCHIP_INTERNAL, 0x00300000, 0x00380000 },	/* RISC-V firmware */
-	{ FLASHCHIP_CART,     0x00000000, 0x00180000 },	/* Cart ECP5 bitstream */
-	{ FLASHCHIP_CART,     0x00180000, 0x00200000 },	/* Cart IPL region */
-	{ FLASHCHIP_CART,     0x00200000, 0x01000000 },	/* Cart filesystem region */
-	{ FLASHCHIP_INTERNAL, 0x00000000, 0x00180000 },	/* Boot Loader */
+} dfu_zones[3] = {
+	{ 0x00180000, 0x00300000 },	/* ECP5 bitstream */
+	{ 0x00300000, 0x00380000 },	/* RISC-V firmware */
+	{ 0x00000000, 0x00180000 },	/* Boot Loader */
 };
 
 
@@ -188,9 +183,6 @@ _dfu_tick(void)
 	/* If flash is busy, we're stuck anyway */
 	else if (flash_read_sr() & 1)
 		return;
-
-	/* Select flash chip to operate on. */
-	flashchip_select(g_dfu.flash.selected);
 
 	/* Erase */
 	if (g_dfu.flash.op == FL_ERASE) {
@@ -426,7 +418,6 @@ _dfu_set_intf(const struct usb_intf_desc *base, const struct usb_intf_desc *sel)
 	g_dfu.flash.addr_prog  = dfu_zones[g_dfu.alt].start;
 	g_dfu.flash.addr_erase = dfu_zones[g_dfu.alt].start;
 	g_dfu.flash.addr_end   = dfu_zones[g_dfu.alt].end;
-	g_dfu.flash.selected   = dfu_zones[g_dfu.alt].flashsel;
 
 	return USB_FND_SUCCESS;
 }

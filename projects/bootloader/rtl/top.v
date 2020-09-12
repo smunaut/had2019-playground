@@ -35,21 +35,10 @@
 
 module top (
 	// LEDs
-	output wire [8:0] led,
+	output wire [2:0] led,
 
-	// Buttons
-	input  wire [7:0] btn,
-
-	// LCD
-	inout  wire [17:0] lcd_db,
-	output wire lcd_rd,
-	output wire lcd_wr,
-	output wire lcd_rs,
-	output wire lcd_rst,
-	output wire lcd_cs,
-	input  wire lcd_id,
-	input  wire lcd_fmark,
-	output wire lcd_blen,
+	// Button
+	input  wire btn,
 
 	// Debug UART
 	input  wire uart_rx,
@@ -63,30 +52,13 @@ module top (
 //	inout  wire flash_sck,
 	inout  wire flash_cs,
 
-	// SPI PSRAM
-	inout  wire [3:0] psrama_sio,
-	inout  wire psrama_nce,
-	inout  wire psrama_sclk,
-
-	inout  wire [3:0] psramb_sio,
-	inout  wire psramb_nce,
-	inout  wire psramb_sclk,
-
 	// USB
 	inout  wire usb_dp,
 	inout  wire usb_dm,
 	output wire usb_pu,
-	input  wire usb_vdet,
 
 	// Boot
 	output wire programn,
-
-	// Generic IO
-	inout  wire [29:0] genio,
-
-	// Internal/external flash selection flipflop input
-	output wire fsel_c,
-	output wire fsel_d,
 
 	// Clock
 	input  wire clk
@@ -243,28 +215,16 @@ module top (
 	);
 
 	// Peripheral [0] : Misc
-	soc_had_misc had_misc_I (
+	soc_oc_r02_misc misc_I (
 		.led(led),
 		.btn(btn),
-		.lcd_db(lcd_db),
-		.lcd_rd(lcd_rd),
-		.lcd_wr(lcd_wr),
-		.lcd_rs(lcd_rs),
-		.lcd_rst(lcd_rst),
-		.lcd_cs(lcd_cs),
-		.lcd_id(lcd_id),
-		.lcd_fmark(lcd_fmark),
-		.lcd_blen(lcd_blen),
 		.programn(programn),
-		.genio(genio),
 		.bus_addr(wb_addr[3:0]),
 		.bus_wdata(wb_wdata),
 		.bus_rdata(wb_rdata[0]),
 		.bus_cyc(wb_cyc[0]),
 		.bus_ack(wb_ack[0]),
 		.bus_we(wb_we),
-		.fsel_c(fsel_c),
-		.fsel_d(fsel_d),
 		.clk(clk_48m),
 		.rst(rst)
 	);
@@ -338,10 +298,10 @@ module top (
 	wire [3:0] spi_io_o;
 	wire [3:0] spi_io_t;
 	wire       spi_sck_o;
-	wire [2:0] spi_cs_o;
+	wire       spi_cs_o;
 
 	qspi_master_wb #(
-		.N_CS(3)
+		.N_CS(1)
 	) spi_master_I (
 		.spi_io_i(spi_io_i),
 		.spi_io_o(spi_io_o),
@@ -366,61 +326,14 @@ module top (
 		.spi_io({flash_hold, flash_wp, flash_miso, flash_mosi}),
 		.spi_cs(flash_cs),
 		.spi_sck(),		// Special via USRMCLK
-		.spi_io_i(spi_io_i_flash),
+		.spi_io_i(spi_io_i),
 		.spi_io_o(spi_io_o),
-		.spi_io_t(spi_cs_o[0] ? 4'hf : spi_io_t),
-		.spi_sck_o(spi_cs_o[0] ? 1'b0 : spi_sck_o),
-		.spi_cs_o(spi_cs_o[0]),
+		.spi_io_t(spi_io_t),
+		.spi_sck_o(spi_sck_o),
+		.spi_cs_o(spi_cs_o),
 		.clk(clk_48m),
 		.rst(rst)
 	);
-
-		// PHY to PSRAM A
-	qspi_phy_ecp5 #(
-		.N_CS(1),
-		.IS_SYS_CFG(0)
-	) spi_phy_psrama_I (
-		.spi_io(psrama_sio),
-		.spi_cs(psrama_nce),
-		.spi_sck(psrama_sclk),
-		.spi_io_i(spi_io_i_psrama),
-		.spi_io_o(spi_io_o),
-		.spi_io_t(spi_cs_o[1] ? 4'hf : spi_io_t),
-		.spi_sck_o(spi_cs_o[1] ? 1'b0 : spi_sck_o),
-		.spi_cs_o(spi_cs_o[1]),
-		.clk(clk_48m),
-		.rst(rst)
-	);
-
-		// PHY to PSRAM B
-	qspi_phy_ecp5 #(
-		.N_CS(1),
-		.IS_SYS_CFG(0)
-	) spi_phy_psramb_I (
-		.spi_io(psramb_sio),
-		.spi_cs(psramb_nce),
-		.spi_sck(psramb_sclk),
-		.spi_io_i(spi_io_i_psramb),
-		.spi_io_o(spi_io_o),
-		.spi_io_t(spi_cs_o[2] ? 4'hf : spi_io_t),
-		.spi_sck_o(spi_cs_o[2] ? 1'b0 : spi_sck_o),
-		.spi_cs_o(spi_cs_o[2]),
-		.clk(clk_48m),
-		.rst(rst)
-	);
-
-		// MUX for read data
-	always @(*)
-	begin
-		spi_io_i <= 4'h0;
-
-		if (~spi_cs_o[0])
-			spi_io_i <= spi_io_i_flash;
-		else if (~spi_cs_o[1])
-			spi_io_i <= spi_io_i_psrama;
-		else if (~spi_cs_o[2])
-			spi_io_i <= spi_io_i_psramb;
-	end
 
 
 	// Clock / Reset

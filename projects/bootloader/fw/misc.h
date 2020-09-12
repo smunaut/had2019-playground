@@ -23,22 +23,6 @@
 
 #pragma once
 
-#define BTN_UP		(1 << 0)
-#define BTN_DOWN	(1 << 1)
-#define BTN_LEFT	(1 << 2)
-#define BTN_RIGHT	(1 << 3)
-#define BTN_B		(1 << 4)
-#define BTN_A		(1 << 5)
-#define BTN_SELECT	(1 << 6)
-#define BTN_START	(1 << 7)
-
-#define LCD_BACKLIGHT	9
-
-#define FLASHCHIP_INTERNAL 0
-#define FLASHCHIP_CART 1
-
-void flashchip_select(int flash_sel);
-
 uint32_t btn_get(void);
 
 void led_on(int n);
@@ -46,8 +30,3 @@ void led_off(int n);
 void led_set_pwm(int n, int level);
 
 void reboot_now(void);
-
-void lcd_init(void);
-void lcd_on(void);
-void lcd_off(void);
-void lcd_show_logo(void);

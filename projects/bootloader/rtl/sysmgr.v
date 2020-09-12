@@ -77,7 +77,7 @@ module sysmgr (
         .CLKOS2_DIV(24),
         .CLKOS2_CPHASE(2),
         .CLKOS2_FPHASE(0),
-        .CLKFB_DIV(12),
+        .CLKFB_DIV(2),
         .CLKI_DIV(1),
         .FEEDBK_PATH("INT_OP")
     ) pll_I (

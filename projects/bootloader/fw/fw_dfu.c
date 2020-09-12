@@ -105,46 +105,34 @@ void main()
 
 	/* SPI */
 	spi_init();
-
-	flashchip_select(FLASHCHIP_INTERNAL);
 	flash_reset();
-	psram_qpi_exit(0);
-	psram_qpi_exit(1);
-
-	/* PSRAM */
-	uint32_t x[2];
-
-	psram_read(0, &x[0], 0, 4);
-	printf("PSRAM A: %08x\n", x[0]);
-	psram_read(1, &x[1], 0, 4);
-	printf("PSRAM B: %08x\n", x[1]);
 
 	/* Should we expose the 'bootloader' section as writable? */
+#if 0
 	if ((btn_get() & BTN_START) == 0)
 	{
+#endif
+
+#if 0
 		/* We patch the descriptor length ... in RO section but not really RO */
 		struct usb_conf_desc *conf = (void*)dfu_stack_desc.conf[0];
 		conf->wTotalLength -= 18;
 
 		/* Set protection bits so apps also can't accidentally brick the badge. */
-		flashchip_select(FLASHCHIP_INTERNAL);
 		flash_write_protect_bootloader();
+#endif
+
+#if 0
 	}
+#endif
 
 	/* Should we directly boot to app ? */
-	do_dfu |= ((btn_get() & BTN_SELECT) != 0);
-	do_dfu |= (x[0] == 0x21554644) && (x[1] == 0x21554644);
+	do_dfu |= btn_get();
 
+#if 0
 	if (!do_dfu)
 		reboot_now();
-
-	/* LCD */
-	lcd_init();
-	lcd_show_logo();
-	lcd_on();
-
-	led_on(LCD_BACKLIGHT);
-	led_set_pwm(LCD_BACKLIGHT, 1);
+#endif
 
 	/* Enable USB */
 	serial_no_init();

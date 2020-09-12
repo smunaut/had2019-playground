@@ -9,7 +9,7 @@ PROJ_RTL_SRCS := $(addprefix rtl/, \
 	qspi_phy_ecp5.v \
 	soc_bram.v \
 	soc_bridge.v \
-	soc_had_misc.v \
+	soc_oc_r02_misc.v \
 	sysmgr.v \
 )
 PROJ_SIM_SRCS := $(addprefix sim/, \
@@ -25,9 +25,9 @@ PROJ_TOP_SRC := rtl/top.v
 PROJ_TOP_MOD := top
 
 # Target config
-BOARD ?= had2019-badge
+BOARD ?= oc-r02
 DEVICE = 45k
-PACKAGE = CABGA381
+PACKAGE = CSFBGA285
 SPEEDGRADE = 8
 
 NEXTPNR_ARGS = --pre-pack data/clocks.py
